@@ -13,7 +13,8 @@ and mpi is m2 */
 /* This function is the matrix form of 
 weights*k^2/{(2pi)^2 omega_k} G M2 */
 /* We call the weights*integral_measure*G matrix as WG_matrix */
-void kernel_2plus1_system_ERE(  comp E, 
+void kernel_2plus1_system_ERE(  Eigen::MatrixXcd &kern_mat,
+                                comp E, 
                                 std::vector<comp> &pvec_for_m1m2,
                                 std::vector<comp> &kvec_for_m1m1, 
                                 std::vector<comp> &weights_for_pvec_for_m1m2,
@@ -186,6 +187,37 @@ void kernel_2plus1_system_ERE(  comp E,
         std::cout<<"============================"<<std::endl; 
     }
 
+    kern_mat = WG_mat*M2k_mat; 
+
+}
+
+void Bmat_2plus1_system_ERE(    Eigen::MatrixXcd &B_mat,
+                                comp E, 
+                                std::vector<comp> &pvec_for_m1m2,
+                                std::vector<comp> &kvec_for_m1m1, 
+                                std::vector<comp> &weights_for_pvec_for_m1m2,
+                                std::vector<comp> &weights_for_kvec_for_m1m1,
+                                double m1, 
+                                double m2,
+                                double eps_for_m2k,
+                                double eps_for_ope,
+                                double eps_for_cutoff,
+                                comp total_P,
+                                double a,
+                                double r    )
+{
+    int size1 = pvec_for_m1m2.size();
+    int size2 = kvec_for_m1m1.size(); 
+
+    Eigen::MatrixXcd kern_mat(size1 + size2, size1 + size2); 
+
+    Eigen::MatrixXcd Imat(size1 + size2, size1 + size2); 
+
+    Imat = Eigen::MatrixXcd::Identity(size1 + size2, size1 + size2); 
+
+    kernel_2plus1_system_ERE(kern_mat, E, pvec_for_m1m2, kvec_for_m1m1, weights_for_pvec_for_m1m2, weights_for_kvec_for_m1m1, m1, m2, eps_for_m2k, eps_for_ope, eps_for_cutoff, total_P, a, r); 
+
+    B_mat = Imat + kern_mat; 
 }
 
 #endif 

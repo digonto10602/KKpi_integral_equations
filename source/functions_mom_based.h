@@ -148,13 +148,23 @@ comp GS_pk( comp E,
 
 }
 
+comp pmom(  comp En,
+            comp sig_i, 
+            double mi   )
+{
+    comp kalln = kallentriangle(En*En, mi*mi, sig_i);
+    comp sqrtkalln = mysqrt(kalln);//std::sqrt(kalln); 
+
+    return sqrtkalln/(2.0*En); 
+}
+
 comp q2k(   comp sig_i, 
             double mj, 
             double mk   )
 {
     comp klntrngle = kallentriangle(sig_i, mj*mj, mk*mk);
 
-    comp sqrtklntrngle = std::sqrt(klntrngle); 
+    comp sqrtklntrngle = mysqrt(klntrngle); 
 
     comp denom = 2.0*std::sqrt(sig_i);
 
