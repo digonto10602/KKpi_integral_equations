@@ -113,7 +113,7 @@ comp cutoff_function_1( comp sigma_i,
 //we define mi, mj, and mk. The momentum p corresponds 
 //to mi and spectator momentum k corresponds to mj. The 
 //exchanged particle has mass mk. 
-comp GS_pk( comp E, 
+comp GS_pk( comp En, 
             comp p, 
             comp k, 
             double mi,  
@@ -125,8 +125,8 @@ comp GS_pk( comp E,
 {
     comp ii = {0.0,1.0};
 
-    comp sigp = sigma(E, p, mi, 0.0);
-    comp sigk = sigma(E, k, mj, 0.0); 
+    comp sigp = sigma(En, p, mi, 0.0);
+    comp sigk = sigma(En, k, mj, 0.0); 
 
     comp Hp = cutoff_function_1(sigp, mj, mk, epsilon_h);
     comp Hk = cutoff_function_1(sigk, mi, mk, epsilon_h); 
@@ -134,7 +134,7 @@ comp GS_pk( comp E,
     comp omgp = omega_func(p, mi);
     comp omgk = omega_func(k, mj);
 
-    comp A = E - omgp - omgk; 
+    comp A = En - omgp - omgk; 
     comp zpk = A*A - p*p - k*k - mk*mk; 
 
     comp pk = p*k; 
@@ -158,6 +158,7 @@ comp pmom(  comp En,
     return sqrtkalln/(2.0*En); 
 }
 
+
 comp q2k(   comp sig_i, 
             double mj, 
             double mk   )
@@ -169,6 +170,58 @@ comp q2k(   comp sig_i,
     comp denom = 2.0*std::sqrt(sig_i);
 
     return sqrtklntrngle/denom;  
+}
+
+
+//This shows the spectator momentum for a given flavor for 
+//which the two-body subsystem forms a bound-state.
+comp qb_i(  comp En, 
+            comp sigb, 
+            double mi   )
+{
+    comp klntrngle = kallentriangle(En*En, mi*mi, sigb);
+
+    comp sqrtklntrngle = mysqrt(klntrngle);
+
+    comp denom = 2.0*En; 
+
+    return sqrtklntrngle/denom; 
+}
+
+//This shows the mass squared of the two-body bound-state
+//depending on the scattering length a^{i}_0,
+//the masses of the particles of the two-body 
+//subsystem, mj and mk 
+comp sigma_b_plus(  double scattering_length_a0i,
+                    double mj, 
+                    double mk )
+{
+    double a0i = scattering_length_a0i; 
+    double firstterm = - 2.0/(a0i*a0i);
+    double secondterm = mj*mj + mk*mk; 
+    double midterm1 = mj*mj - 1.0/(a0i*a0i); 
+    double midterm2 = mk*mk - 1.0/(a0i*a0i); 
+    double thirdterm = 2.0*std::sqrt( midterm1*midterm2 );
+
+    double result = firstterm + secondterm + thirdterm;
+
+    return result; 
+}
+
+comp sigma_b_minus( double scattering_length_a0i,
+                    double mj, 
+                    double mk )
+{
+    double a0i = scattering_length_a0i; 
+    double firstterm = - 2.0/(a0i*a0i);
+    double secondterm = mj*mj + mk*mk; 
+    double midterm1 = mj*mj - 1.0/(a0i*a0i); 
+    double midterm2 = mk*mk - 1.0/(a0i*a0i); 
+    double thirdterm = 2.0*std::sqrt( midterm1*midterm2 );
+
+    double result = firstterm + secondterm + thirdterm;
+
+    return result; 
 }
 
 comp M2k_ERE(   comp E, 
@@ -185,7 +238,31 @@ comp M2k_ERE(   comp E,
     double pi = std::acos(-1.0); 
 
     comp sigk = sigma(E, k, mi, total_P);
-    comp q = q2k(sigk, mj, mk); 
+    comp q = q2k(sigk + ii*eps, mj, mk); 
+
+    comp num = 16.0*pi*sqrt(sigk);
+    comp denom = -1.0/a + r*q*q/2.0 - ii*q; 
+
+    return num/denom; 
+
+}
+
+//This M2k is sigk based, used mostly for plotting
+comp M2k_ERE_s2k(   comp E, 
+                    comp sigk, //energy squared of the two-body system
+                    comp total_P,  
+                    double a, //This is the scattering length
+                    double r, //This is the effective range 
+                    double mi, //mass of the spectator  
+                    double mj, 
+                    double mk, 
+                    double eps  )
+{
+    comp ii = {0.0, 1.0}; 
+    double pi = std::acos(-1.0); 
+
+    //comp sigk = sigma(E, k, mi, total_P);
+    comp q = q2k(sigk + ii*eps, mj, mk); 
 
     comp num = 16.0*pi*sqrt(sigk);
     comp denom = -1.0/a + r*q*q/2.0 - ii*q; 
