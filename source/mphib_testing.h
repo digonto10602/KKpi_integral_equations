@@ -29,7 +29,7 @@ void negative_GSpqb_mat(    Eigen::MatrixXcd &negGpqb_mat,
                             double eps_for_cutoff,
                             comp total_P )
 {
-    char debug = 'y';
+    char debug = 'n';
     double mi,mj,mk; 
     comp ii = {0.0,1.0};
     comp pi = std::acos(-1.0); 
@@ -97,7 +97,7 @@ void negative_GSpqb_mat(    Eigen::MatrixXcd &negGpqb_mat,
 
     negGpqb_mat = -Gmat; 
 
-    std::cout<<"here"<<std::endl; 
+    //std::cout<<"here"<<std::endl; 
 
 
     if(debug=='y')
@@ -136,7 +136,7 @@ void dpqb_solver_ERE(   Eigen::MatrixXcd &dmatpqb,
                         double r0_m2, 
                         int number_of_points    )
 {
-    char debug = 'y';
+    char debug = 'n';
     double mi = m1;
     double mj = m1; 
     double mk = m2; 
@@ -144,6 +144,8 @@ void dpqb_solver_ERE(   Eigen::MatrixXcd &dmatpqb,
 
     comp kmax_for_m1 = pmom(En, 0.0, m1);
     comp kmax_for_m2 = pmom(En, 0.0, m2); 
+
+    comp epsilon_for_kvec = 1.0e-5; 
 
     if(debug=='y')
     {
@@ -187,10 +189,10 @@ void dpqb_solver_ERE(   Eigen::MatrixXcd &dmatpqb,
     double relerr; 
 
     Bmat_2plus1_system_ERE( B_mat, En, pvec_for_m1m2, kvec_for_m1m1, weights_for_pvec_for_m1m2, weights_for_kvec_for_m1m1, m1, m2, eps_for_m2k, eps_for_ope, eps_for_cutoff, total_P, a0_m1, r0_m1, a0_m2, r0_m2 );
-    std::cout<<"here"<<std::endl; 
+    //std::cout<<"here"<<std::endl; 
     
     negative_GSpqb_mat(negG_mat, En, pvec_for_m1m2, kvec_for_m1m1, weights_for_pvec_for_m1m2, weights_for_kvec_for_m1m1, qb, m1, m2, eps_for_ope, eps_for_cutoff, total_P);
-    std::cout<<"here"<<std::endl; 
+    //std::cout<<"here"<<std::endl; 
     
     LinearSolver_2(B_mat, d_mat, negG_mat, relerr); 
 
@@ -205,6 +207,8 @@ void dpqb_solver_ERE(   Eigen::MatrixXcd &dmatpqb,
         std::cout<<"d_mat = "<<std::endl; 
         std::cout<<d_mat<<std::endl; 
         std::cout<<"==========================="<<std::endl; 
+        std::cout<<"relative error of inversion = "<<relerr<<std::endl; 
+    
     }
 
     dmatpqb = d_mat; 
@@ -220,7 +224,7 @@ void dqq_interpolator(  Eigen::MatrixXcd &result_dqbqb_mat,
                         std::vector<comp> &weights_for_pvec_for_m1m2, 
                         std::vector<comp> &kvec_for_m1m1,
                         std::vector<comp> &weights_for_kvec_for_m1m1, 
-                        comp qb, //relative spectator momentum for the two-body bound-state
+                        comp &qb, //relative spectator momentum for the two-body bound-state
                         double eps_for_m2k, 
                         double eps_for_ope, 
                         double eps_for_cutoff, 
@@ -231,7 +235,7 @@ void dqq_interpolator(  Eigen::MatrixXcd &result_dqbqb_mat,
                         double r0_m2, 
                         int number_of_points    )
 {
-    char debug = 'y';
+    char debug = 'n';
     comp ii = {0.0,1.0};
     comp pi = std::acos(-1.0); 
 
@@ -306,6 +310,9 @@ void dqq_interpolator(  Eigen::MatrixXcd &result_dqbqb_mat,
 
     Eigen::MatrixXcd M2k_m1m2(size1, size1);
     Eigen::MatrixXcd M2k_m1m1(size2, size2);
+
+    M2k_m1m2 = Eigen::MatrixXcd::Zero(size1,size1);
+    M2k_m1m1 = Eigen::MatrixXcd::Zero(size2,size2); 
 
     Eigen::MatrixXcd M2k_filler0_12(size1, size2); 
     Eigen::MatrixXcd M2k_filler0_21(size2, size1); 
@@ -449,6 +456,21 @@ void dqq_interpolator(  Eigen::MatrixXcd &result_dqbqb_mat,
     }
 
 }
+
+/*  SA Method */
+comp delta_epsilon( comp sigk, 
+                    comp sigb, 
+                    double eps_for_m2k  )
+{
+    double pi = std::acos(-1.0); 
+
+    comp res = eps_for_m2k/(pi*(std::pow(sigk - sigb,2.0) + std::pow(eps_for_m2k,2.0)));
+
+    return res; 
+}
+
+//comp dela_M2k_ERE(  )
+
 
 
 #endif

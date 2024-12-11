@@ -196,14 +196,13 @@ comp sigma_b_plus(  double scattering_length_a0i,
                     double mj, 
                     double mk )
 {
-    double a0i = scattering_length_a0i; 
-    double firstterm = - 2.0/(a0i*a0i);
-    double secondterm = mj*mj + mk*mk; 
-    double midterm1 = mj*mj - 1.0/(a0i*a0i); 
-    double midterm2 = mk*mk - 1.0/(a0i*a0i); 
-    double thirdterm = 2.0*std::sqrt( midterm1*midterm2 );
-
-    double result = firstterm + secondterm + thirdterm;
+    comp a0i = scattering_length_a0i; 
+    comp firstterm = - 2.0/(a0i*a0i);
+    comp secondterm = mj*mj + mk*mk; 
+    comp midterm1 = mj*mj - 1.0/(a0i*a0i); 
+    comp midterm2 = mk*mk - 1.0/(a0i*a0i); 
+    comp thirdterm = 2.0*std::sqrt( midterm1*midterm2 );
+    comp result = firstterm + secondterm + thirdterm;
 
     return result; 
 }
@@ -212,16 +211,53 @@ comp sigma_b_minus( double scattering_length_a0i,
                     double mj, 
                     double mk )
 {
-    double a0i = scattering_length_a0i; 
-    double firstterm = - 2.0/(a0i*a0i);
-    double secondterm = mj*mj + mk*mk; 
-    double midterm1 = mj*mj - 1.0/(a0i*a0i); 
-    double midterm2 = mk*mk - 1.0/(a0i*a0i); 
-    double thirdterm = 2.0*std::sqrt( midterm1*midterm2 );
+    comp a0i = scattering_length_a0i; 
+    comp firstterm = - 2.0/(a0i*a0i);
+    comp secondterm = mj*mj + mk*mk; 
+    comp midterm1 = mj*mj - 1.0/(a0i*a0i); 
+    comp midterm2 = mk*mk - 1.0/(a0i*a0i); 
+    comp thirdterm = 2.0*std::sqrt( midterm1*midterm2 );
 
-    double result = firstterm + secondterm + thirdterm;
+    comp result = firstterm + secondterm + thirdterm;
 
     return result; 
+}
+
+//This is the kinematic phase-space for the 
+//bound-state spectator system 
+comp rhophib(   comp qb, 
+                comp En )
+{
+    double pi = std::acos(-1.0); 
+    return qb/(8.0*pi*En);
+}
+
+
+//This is the two-body residue for the bound-state
+comp gfunc( comp sigb, 
+            double scattering_length_a0 )
+{
+    double pi = std::acos(-1.0); 
+    return 8.0*std::sqrt(2.0*pi*std::sqrt(sigb)/scattering_length_a0);
+}
+
+
+//Here we define the energy dependent epsilon 
+//defined in https://arxiv.org/pdf/2010.09820
+double energy_dependent_epsilon(    double eta, 
+                                    comp En, 
+                                    comp qb, //relative spectator momentum for two-body boundstate
+                                    comp sigb, //mass square of the two-body bound-state
+                                    comp kmax, //maximum spectator momentum
+                                    double mi, //mass of the spectator 
+                                    double number_of_points )
+{
+    double pi = std::acos(-1.0); 
+
+    comp termA = (eta*kmax)/(2.0*pi*number_of_points);
+    comp termB = (4.0*qb*En*En)/(En*En + mi*mi - sigb);
+
+    return ((double)real(termA*termB)); 
 }
 
 comp M2k_ERE(   comp E, 

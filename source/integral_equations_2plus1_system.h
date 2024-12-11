@@ -31,7 +31,7 @@ void kernel_2plus1_system_ERE(  Eigen::MatrixXcd &kern_mat,
                                 double r0_m2    )
 {
     //Boiler Plate
-    char debug = 'y';
+    char debug = 'n';
     comp ii = {0.0,1.0};
     comp pi = std::acos(-1.0); 
     //double r = 0.0;//setting effective range to 0 for both M2k
@@ -43,7 +43,8 @@ void kernel_2plus1_system_ERE(  Eigen::MatrixXcd &kern_mat,
     Eigen::MatrixXcd M2k_for_m1m2(size_for_M2_1, size_for_M2_1);
     //when m1 and m1 are in twobody subchannel 
     Eigen::MatrixXcd M2k_for_m1m1(size_for_M2_2, size_for_M2_2);
-    
+    M2k_for_m1m2 = Eigen::MatrixXcd::Zero(size_for_M2_1, size_for_M2_1); 
+    M2k_for_m1m1 = Eigen::MatrixXcd::Zero(size_for_M2_2, size_for_M2_2); 
     //Now M2k for m1 and m2 goes in the 11 position of the M2 matrix
     //and M2k for m1 and m1 goes in the 22 position of the M2 matrix
     //The rest shall be filled with zeros 
@@ -331,6 +332,20 @@ void negative_Gmat_2plus1_system(   Eigen::MatrixXcd &neg_G_mat,
     }
 
 
+}
+
+/*===========================================================*/
+
+                //M3df Integral Equation
+
+/*===========================================================*/
+
+
+//The following is based on the Ls rescattering matrix 
+void LSmat_2plus1_system(   Eigen::MatrixXcd &Lsmat
+                            )
+{
+    
 }
 
 

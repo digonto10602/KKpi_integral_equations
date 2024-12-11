@@ -102,7 +102,7 @@ void M2k_Plotter_KK()
 void test_kinematic_variables()
 {
     double m1 = 1.0;
-    double m2 = 0.5;
+    double m2 = 1.0;//0.999;
 
     double mi = m1;
     double mj = m1;
@@ -132,40 +132,412 @@ void test_kinematic_variables()
 void test_dpqb_building()
 {
     double m1 = 1.0;
-    double m2 = 0.5; 
+    double m2 = 0.99999999990;//0.999; 
     double a0_1 = 2.0; 
     double a0_2 = 2.0; 
     double r0_1 = 0.0; 
     double r0_2 = 0.0; 
 
-    double En = 2.4;
+    //double En = 1.95;
     double total_P = 0.0; 
     double r = 0; 
-    int number_of_points = 3;  
+    int number_of_points = 100;//200;//250;  
 
-    double eps_for_m2k = 0.0;
-    double eps_for_ope = 0.0; 
+    double eps_for_m2k = 0.001;
+    double eps_for_ope = 0.001; 
     double eps_for_cutoff = 0.0; 
 
-    Eigen::MatrixXcd dpqbmat; 
-    Eigen::MatrixXcd dqqmat; 
-    std::vector<comp> pvec_for_m1m2; 
-    std::vector<comp> weights_for_pvec_for_m1m2; 
-    std::vector<comp> kvec_for_m1m1; 
-    std::vector<comp> weights_for_kvec_for_m1m1; 
-    comp qb; 
+    /*-----------------------------------------*/
 
-    dpqb_solver_ERE(dpqbmat, En, m1, m2, pvec_for_m1m2, weights_for_pvec_for_m1m2, kvec_for_m1m1, weights_for_kvec_for_m1m1, qb, eps_for_m2k, eps_for_ope, eps_for_cutoff, total_P, a0_1, r0_1, a0_2, r0_2, number_of_points); 
-    dqq_interpolator(dqqmat, dpqbmat, En, m1, m2, pvec_for_m1m2, weights_for_pvec_for_m1m2, kvec_for_m1m1, weights_for_kvec_for_m1m1, qb, eps_for_m2k, eps_for_ope, eps_for_cutoff, total_P, a0_1, r0_1, a0_2, r0_2, number_of_points);
+    comp sigb1plus = sigma_b_plus(a0_1, m1, m2);
+    comp sigb1minus = sigma_b_minus(a0_1, m1, m2); 
+    comp sigb2plus = sigma_b_plus(a0_2, m1, m1); 
+    comp sigb2minus = sigma_b_minus(a0_2, m1, m1); 
+    comp phib1plus = std::sqrt(sigb1plus) + m1;
+    comp phib1minus = std::sqrt(sigb1minus) + m1;
+    comp phib2plus = std::sqrt(sigb2plus) + m2;
+    comp phib2minus = std::sqrt(sigb2minus) + m2;
 
+    std::cout<<"sigb1+ = "<<sigb1plus<<std::endl; 
+    std::cout<<"sigb1- = "<<sigb1minus<<std::endl; 
+    
+    std::cout<<"sigb2+ = "<<sigb2plus<<std::endl; 
+    std::cout<<"sigb2- = "<<sigb2minus<<std::endl; 
+
+    std::cout<<"phib+ threshold 1 = "<<phib1plus<<std::endl; 
+    std::cout<<"phib- threshold 1 = "<<phib1minus<<std::endl; 
+    std::cout<<"phib+ threshold 2 = "<<phib2plus<<std::endl; 
+    std::cout<<"phib- threshold 2 = "<<phib2minus<<std::endl; 
+
+    comp threeparticle_threshold = (m1 + m1 + m2); 
+
+    //comp En = (phib1 + threeparticle_threshold)/2.0;
+
+    std::cout<<"threeparticle threshold = "<<threeparticle_threshold<<std::endl; 
+
+    
+    //abort();
+
+    
+    /* Generating a file here to check */
+    std::ofstream fout;
+    std::string filename =  "check_dqq_test1.dat";
+
+    fout.open(filename.c_str()); 
+
+    comp En_initial = phib1plus; 
+    comp En_final = threeparticle_threshold; 
+
+    double En_points = 3;//100.0; 
+    comp delEn = std::abs(En_initial - En_final)/En_points; 
+
+    //for(int i=0; i<(int)En_points; ++i)
+    {
+        int i = 1; 
+        comp En = En_initial + ((comp)i)*delEn; 
+        //comp qb; 
+        Eigen::MatrixXcd dpqbmat; 
+        Eigen::MatrixXcd dqqmat; 
+        std::vector<comp> pvec_for_m1m2; 
+        std::vector<comp> weights_for_pvec_for_m1m2; 
+        std::vector<comp> kvec_for_m1m1; 
+        std::vector<comp> weights_for_kvec_for_m1m1; 
+
+        double eta = 25; 
+
+        comp qb = qb_i(En, sigb1plus, m1);
+        comp kmax = pmom(En, 0.0, m1); 
+
+        eps_for_m2k = energy_dependent_epsilon(eta, En, qb, sigb1plus, kmax, m1, number_of_points);
+        eps_for_ope = 0.01; //eps_for_m2k; 
+        dpqb_solver_ERE(dpqbmat, En, m1, m2, pvec_for_m1m2, weights_for_pvec_for_m1m2, kvec_for_m1m1, weights_for_kvec_for_m1m1, qb, eps_for_m2k, eps_for_ope, eps_for_cutoff, total_P, a0_1, r0_1, a0_2, r0_2, number_of_points); 
+        dqq_interpolator(dqqmat, dpqbmat, En, m1, m2, pvec_for_m1m2, weights_for_pvec_for_m1m2, kvec_for_m1m1, weights_for_kvec_for_m1m1, qb, eps_for_m2k, eps_for_ope, eps_for_cutoff, total_P, a0_1, r0_1, a0_2, r0_2, number_of_points);
+
+        //std::cout<<"pvec size = "<<pvec_for_m1m2.size()<<std::endl; 
+        /*for(int i=0; i<pvec_for_m1m2.size(); ++i)
+        {
+            std::cout<<"pvec i="<<i<<'\t'<<"val = "<<pvec_for_m1m2[i]<<std::endl;
+        }*/
+
+        comp dqq11 = dqqmat(0,0); 
+        
+        comp gval = gfunc(sigb1plus,a0_1);
+
+        comp mphib = gval*gval*dqq11; 
+        comp rhophib_mphib = rhophib(qb, En)*mphib; 
+
+        std::cout<<En.real()<<'\t'<<(En*En).real()<<'\t'<<rhophib_mphib.real()<<'\t'<<rhophib_mphib.imag()<<std::endl; 
+        fout<<std::real(En)<<'\t'<<std::real(En*En)<<'\t'<<rhophib_mphib.real()<<'\t'<<rhophib_mphib.imag()<<std::endl; 
+        
+    
+    }
+    fout.close(); 
 }
+
+
+
+void test_dpqb_building_1()
+{
+    double m1 = 1.0;
+    double m2 = 1.0;//0.99999999990;//0.999; 
+    double a0_1 = 16.0; 
+    double a0_2 = 2.0; 
+    double r0_1 = 0.0; 
+    double r0_2 = 0.0; 
+
+    //double En = 1.95;
+    double total_P = 0.0; 
+    double r = 0; 
+    int number_of_points = 250;  
+
+    double eps_for_m2k = 0.001;
+    double eps_for_ope = 0.001; 
+    double eps_for_cutoff = 0.0; 
+
+    /*-----------------------------------------*/
+
+    comp sigb1plus = sigma_b_plus(a0_1, m1, m2);
+    comp sigb1minus = sigma_b_minus(a0_1, m1, m2); 
+    comp sigb2plus = sigma_b_plus(a0_2, m1, m1); 
+    comp sigb2minus = sigma_b_minus(a0_2, m1, m1); 
+    comp phib1plus = std::sqrt(sigb1plus) + m1;
+    comp phib1minus = std::sqrt(sigb1minus) + m1;
+    comp phib2plus = std::sqrt(sigb2plus) + m2;
+    comp phib2minus = std::sqrt(sigb2minus) + m2;
+
+    std::cout<<"sigb1+ = "<<sigb1plus<<std::endl; 
+    std::cout<<"sigb1- = "<<sigb1minus<<std::endl; 
+    
+    std::cout<<"sigb2+ = "<<sigb2plus<<std::endl; 
+    std::cout<<"sigb2- = "<<sigb2minus<<std::endl; 
+
+    std::cout<<"phib+ threshold 1 = "<<phib1plus<<std::endl; 
+    std::cout<<"phib- threshold 1 = "<<phib1minus<<std::endl; 
+    std::cout<<"phib+ threshold 2 = "<<phib2plus<<std::endl; 
+    std::cout<<"phib- threshold 2 = "<<phib2minus<<std::endl; 
+
+    comp threeparticle_threshold = (m1 + m1 + m2); 
+
+    //comp En = (phib1 + threeparticle_threshold)/2.0;
+
+    std::cout<<"threeparticle threshold = "<<threeparticle_threshold<<std::endl; 
+
+    
+    //abort();
+
+    
+    /* Generating a file here to check */
+    std::ofstream fout;
+    std::string filename =  "mphib_above_phibthreshold_a" + std::to_string((int)a0_1) + ".dat";
+
+    fout.open(filename.c_str()); 
+
+    comp En_initial = phib1plus; 
+    comp En_final = threeparticle_threshold; 
+
+    double En_points = 3000.0; 
+    comp delEn = std::abs(En_initial - En_final)/En_points; 
+
+    for(int i=0; i<(int)En_points; ++i)
+    {
+        comp En = En_initial + ((comp)i)*delEn; 
+        //comp qb; 
+        Eigen::MatrixXcd dpqbmat; 
+        Eigen::MatrixXcd dqqmat; 
+        std::vector<comp> pvec_for_m1m2; 
+        std::vector<comp> weights_for_pvec_for_m1m2; 
+        std::vector<comp> kvec_for_m1m1; 
+        std::vector<comp> weights_for_kvec_for_m1m1; 
+
+        double eta = 15; 
+
+        comp qb = qb_i(En, sigb1plus, m1);
+        comp kmax = pmom(En, 0.0, m1); 
+
+        eps_for_m2k = energy_dependent_epsilon(eta, En, qb, sigb1plus, kmax, m1, number_of_points);
+        eps_for_ope = eps_for_m2k; 
+        dpqb_solver_ERE(dpqbmat, En, m1, m2, pvec_for_m1m2, weights_for_pvec_for_m1m2, kvec_for_m1m1, weights_for_kvec_for_m1m1, qb, eps_for_m2k, eps_for_ope, eps_for_cutoff, total_P, a0_1, r0_1, a0_2, r0_2, number_of_points); 
+        dqq_interpolator(dqqmat, dpqbmat, En, m1, m2, pvec_for_m1m2, weights_for_pvec_for_m1m2, kvec_for_m1m1, weights_for_kvec_for_m1m1, qb, eps_for_m2k, eps_for_ope, eps_for_cutoff, total_P, a0_1, r0_1, a0_2, r0_2, number_of_points);
+
+        /*for(int i=0; i<pvec_for_m1m2.size(); ++i)
+        {
+            std::cout<<"pvec i="<<i<<'\t'<<"val = "<<pvec_for_m1m2[i]<<std::endl;
+        }*/
+
+        comp dqq11 = dqqmat(0,0); 
+        
+        comp gval = gfunc(sigb1plus,a0_1);
+
+        comp mphib = gval*gval*dqq11; 
+        comp rhophib_mphib = rhophib(qb, En)*mphib; 
+        comp rhophib_val = rhophib(qb,En); 
+
+        double diff = (double)std::abs((std::imag(1.0/mphib) + std::real(rhophib_val))/(std::real(rhophib_val)))*100;
+        
+        std::cout<<std::setprecision(20)<<En.real()<<'\t'<<(En*En).real()<<'\t'<<rhophib_mphib.real()<<'\t'<<rhophib_mphib.imag()<<'\t'<<diff<<std::endl; 
+        fout<<std::setprecision(20)<<std::real(En)<<'\t'<<std::real(En*En)<<'\t'<<rhophib_mphib.real()<<'\t'<<rhophib_mphib.imag()<<'\t'<<diff<<std::endl; 
+        
+    
+    }
+    fout.close(); 
+}
+
+
+//We change m2 value by 0.1 starting from 0.9
+//and check rhoMphib value 
+void test_d11_building_1()
+{
+    comp ii = {0.0,1.0};
+    double m1 = 1.0;
+    double m2 = 1.0;//0.99999999990;//0.999; 
+    double a0_1 = 2.0; 
+    double a0_2 = 2.0; 
+    double r0_1 = 0.0; 
+    double r0_2 = 0.0; 
+
+    double m2_initial = 0.7; 
+    double m2_final = 1.0; 
+    double del_m2 = 0.1; 
+    double m2_points = std::abs(m2_initial - m2_final)/del_m2; 
+    //double En = 1.95;
+    double total_P = 0.0; 
+    double r = 0; 
+    int number_of_points = 250;  
+
+    double eps_for_m2k = 0.001;
+    double eps_for_ope = 0.001; 
+    double eps_for_cutoff = 0.0; 
+
+    /*-----------------------------------------*/
+
+    
+    
+    //abort();
+
+    
+    /* Generating a file here to check */
+    std::ofstream fout;
+    std::ofstream fout1; 
+    
+
+    /* file index naming*/
+    fout<<"En"<<'\t'
+        <<"s"<<'\t'
+        <<"Re(rhoMphib)"<<'\t'
+        <<"Im(rhoMphib)"<<'\t'
+        <<"perc_diff"
+        <<std::endl; 
+
+    fout1<<"En"<<'\t'
+         <<"s"<<'\t'
+         <<"Redqq11"<<'\t'
+         <<"Imdqq11"<<'\t'
+         <<"Redqq12"<<'\t'
+         <<"Imdqq12"<<'\t'
+         <<"Redqq21"<<'\t'
+         <<"Imdqq21"<<'\t'
+         <<"Redqq22"<<'\t'
+         <<"Imdqq22"
+         <<std::endl; 
+
+    for(int j=0; j<(int)m2_points; ++j)
+    {
+        m2 = m2_initial + j*del_m2; 
+
+        comp sigb1plus = sigma_b_plus(a0_1, m1, m2);
+        comp sigb1minus = sigma_b_minus(a0_1, m1, m2); 
+        comp sigb2plus = sigma_b_plus(a0_2, m1, m1); 
+        comp sigb2minus = sigma_b_minus(a0_2, m1, m1); 
+        comp phib1plus = std::sqrt(sigb1plus) + m1;
+        comp phib1minus = std::sqrt(sigb1minus) + m1;
+        comp phib2plus = std::sqrt(sigb2plus) + m2;
+        comp phib2minus = std::sqrt(sigb2minus) + m2;
+
+        std::cout<<"sigb1+ = "<<sigb1plus<<std::endl; 
+        std::cout<<"sigb1- = "<<sigb1minus<<std::endl; 
+    
+        std::cout<<"sigb2+ = "<<sigb2plus<<std::endl; 
+        std::cout<<"sigb2- = "<<sigb2minus<<std::endl; 
+
+        std::cout<<"phib+ threshold 1 = "<<phib1plus<<std::endl; 
+        std::cout<<"phib- threshold 1 = "<<phib1minus<<std::endl; 
+        std::cout<<"phib+ threshold 2 = "<<phib2plus<<std::endl; 
+        std::cout<<"phib- threshold 2 = "<<phib2minus<<std::endl; 
+
+        comp threeparticle_threshold = (m1 + m1 + m2); 
+
+        //comp En = (phib1 + threeparticle_threshold)/2.0;
+
+        std::cout<<"threeparticle threshold = "<<threeparticle_threshold<<std::endl; 
+
+        std::string filename =    "mphib_above_phibthreshold_m2_" + std::to_string(m2) 
+                                + "_a1_" + std::to_string(a0_1)
+                                + ".dat";
+        std::string filename1 =   "dqq_m2_" + std::to_string(m2)
+                                + "_a1_" + std::to_string(a0_1) 
+                                + ".dat"; 
+
+        fout.open(filename.c_str()); 
+        fout1.open(filename1.c_str()); 
+
+        comp En_initial = phib1plus; 
+        comp En_final = threeparticle_threshold; 
+
+        double En_points = 2000.0; 
+        comp delEn = std::abs(En_initial - En_final)/En_points; 
+        //abort();
+    
+    for(int i=0; i<(int)En_points; ++i)
+    {
+        double img_En = 0.0; 
+        comp En = std::real(En_initial + ((comp)i)*delEn) + ii*img_En; 
+        //comp qb; 
+        Eigen::MatrixXcd dpqbmat; 
+        Eigen::MatrixXcd dqqmat; 
+        std::vector<comp> pvec_for_m1m2; 
+        std::vector<comp> weights_for_pvec_for_m1m2; 
+        std::vector<comp> kvec_for_m1m1; 
+        std::vector<comp> weights_for_kvec_for_m1m1; 
+
+        double eta = 55; 
+
+        comp qb = qb_i(En, sigb1plus, m1);
+        comp kmax = pmom(En, 0.0, m1); 
+
+        eps_for_m2k = energy_dependent_epsilon(eta, En, qb, sigb1plus, kmax, m1, number_of_points);
+        eps_for_ope = eps_for_m2k; 
+        dpqb_solver_ERE(dpqbmat, En, m1, m2, pvec_for_m1m2, weights_for_pvec_for_m1m2, kvec_for_m1m1, weights_for_kvec_for_m1m1, qb, eps_for_m2k, eps_for_ope, eps_for_cutoff, total_P, a0_1, r0_1, a0_2, r0_2, number_of_points); 
+        dqq_interpolator(dqqmat, dpqbmat, En, m1, m2, pvec_for_m1m2, weights_for_pvec_for_m1m2, kvec_for_m1m1, weights_for_kvec_for_m1m1, qb, eps_for_m2k, eps_for_ope, eps_for_cutoff, total_P, a0_1, r0_1, a0_2, r0_2, number_of_points);
+
+        /*for(int i=0; i<pvec_for_m1m2.size(); ++i)
+        {
+            std::cout<<"pvec i="<<i<<'\t'<<"val = "<<pvec_for_m1m2[i]<<std::endl;
+        }*/
+
+        comp dqq11 = dqqmat(0,0); 
+        comp dqq12 = dqqmat(0,1); 
+        comp dqq21 = dqqmat(1,0); 
+        comp dqq22 = dqqmat(1,1); 
+
+        
+        comp gval = gfunc(sigb1plus,a0_1);
+
+        comp mphib = gval*gval*dqq11; 
+        comp rhophib_mphib = rhophib(qb, En)*mphib; 
+        comp rhophib_val = rhophib(qb,En); 
+
+        double diff = (double)std::abs((std::imag(1.0/mphib) + std::real(rhophib_val))/(std::real(rhophib_val)))*100;
+        
+        std::cout<<std::setprecision(6)
+                 <<"m2 = "<<m2<<'\t'
+                 <<"sigb = "<<sigb1plus<<'\t'
+                 <<"En = "<<En<<'\t'
+                 <<"s = "<<(En*En)<<'\t'
+                 <<"rhoM = "<<rhophib_mphib<<'\t'
+                 <<"diff = "<<diff<<'\t'
+                 <<"d12 = "<<dqq12<<'\t'
+                 <<"d21 = "<<dqq21<<'\t'
+                 <<"d22 = "<<dqq22
+                 <<std::endl; 
+        
+        
+        fout<<std::setprecision(20)
+            <<std::real(En)<<'\t'
+            <<std::real(En*En)<<'\t'
+            <<rhophib_mphib.real()<<'\t'
+            <<rhophib_mphib.imag()<<'\t'
+            <<diff
+            <<std::endl; 
+        
+        fout1<<std::setprecision(20)
+             <<std::real(En)<<'\t'
+             <<std::real(En*En)<<'\t'
+             <<std::real(dqq11)<<'\t'
+             <<std::imag(dqq11)<<'\t'
+             <<std::real(dqq12)<<'\t'
+             <<std::imag(dqq12)<<'\t'
+             <<std::real(dqq21)<<'\t'
+             <<std::imag(dqq21)<<'\t'
+             <<std::real(dqq22)<<'\t'
+             <<std::imag(dqq22)
+             <<std::endl; 
+    
+    }
+    fout.close(); 
+    fout1.close(); 
+    }
+}
+
+
 int main()
 {
     //test_M2(); 
     //test_q2k_sigk();
     //test_sigk_q2k();
     //test_kinematic_variables();
-    test_dpqb_building();
+    //test_dpqb_building();
+    //test_dpqb_building_1();
+    test_d11_building_1();
     
     return 0;
 }
