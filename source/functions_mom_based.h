@@ -9,6 +9,11 @@ typedef std::complex<double> comp;
 
 comp ii = {0.0,1.0};
 
+/* Important Debug Functions */
+
+
+/*---------------------------*/
+
 comp mysqrt(    comp x  )
 {
     comp ii = {0.0,1.0}; 
@@ -143,6 +148,7 @@ comp GS_pk( comp En,
     comp denom = zpk + ii*eps + 2.0*pk;
 
     comp result = - Hp*Hk/(4.0*pk) * std::log(num/denom); 
+    //comp result = - 1.0/(4.0*pk) * std::log(num/denom); 
 
     return result; 
 
@@ -218,7 +224,7 @@ comp sigma_b_minus( double scattering_length_a0i,
     comp midterm2 = mk*mk - 1.0/(a0i*a0i); 
     comp thirdterm = 2.0*std::sqrt( midterm1*midterm2 );
 
-    comp result = firstterm + secondterm + thirdterm;
+    comp result = firstterm + secondterm - thirdterm;
 
     return result; 
 }
@@ -234,6 +240,7 @@ comp rhophib(   comp qb,
 
 
 //This is the two-body residue for the bound-state
+//for the degenerate mass case
 comp gfunc( comp sigb, 
             double scattering_length_a0 )
 {
@@ -241,6 +248,30 @@ comp gfunc( comp sigb,
     return 8.0*std::sqrt(2.0*pi*std::sqrt(sigb)/scattering_length_a0);
 }
 
+//This is the two-body residue for 2+1 system
+comp gfunc_i(   double eta_i, 
+                comp sigb, 
+                double mj, 
+                double mk   )
+{
+    comp ii = {0.0, 1.0}; 
+    double pi = std::acos(-1.0); 
+    comp lamb = kallentriangle(sigb, mj*mj, mk*mk);
+
+    comp termA = 32.0*pi*sigb*sigb*std::sqrt(lamb);
+    comp termB = sigb - mj*mj + mk*mk; 
+    comp termC = sigb + mj*mj - mk*mk; 
+
+    comp res = std::sqrt(-ii*termA/(eta_i*termB*termC));
+
+    if(std::abs(sigb.real())<1.0e-10 && std::abs(sigb.imag())<1.0e-10)
+    {
+        res = 0.0; 
+        std::cout<<"g residue set to 0 because sigb=0"<<std::endl; 
+    }
+    
+    return res; 
+}
 
 //Here we define the energy dependent epsilon 
 //defined in https://arxiv.org/pdf/2010.09820
@@ -260,7 +291,33 @@ double energy_dependent_epsilon(    double eta,
     return ((double)real(termA*termB)); 
 }
 
-comp M2k_ERE(   comp E, 
+//This is M2k_tilde, where the symmetry 
+//factor is not multiplied
+comp M2k_tilde_ERE( comp E, 
+                    comp k, //spectator momentum
+                    comp total_P,  
+                    double a, //This is the scattering length
+                    double r, //This is the effective range 
+                    double mi, //mass of the spectator  
+                    double mj, 
+                    double mk, 
+                    double eps  )
+{
+    comp ii = {0.0, 1.0}; 
+    double pi = std::acos(-1.0); 
+
+    comp sigk = sigma(E, k, mi, total_P);
+    comp q = q2k(sigk + ii*eps, mj, mk); 
+
+    comp num = 8.0*pi*sqrt(sigk);
+    comp denom = (-1.0/a + r*q*q/2.0 - ii*q); 
+
+    return num/denom; 
+
+}
+
+comp M2k_ERE(   double eta_i,
+                comp E, 
                 comp k, //spectator momentum
                 comp total_P,  
                 double a, //This is the scattering length
@@ -276,15 +333,16 @@ comp M2k_ERE(   comp E,
     comp sigk = sigma(E, k, mi, total_P);
     comp q = q2k(sigk + ii*eps, mj, mk); 
 
-    comp num = 16.0*pi*sqrt(sigk);
-    comp denom = -1.0/a + r*q*q/2.0 - ii*q; 
+    comp num = 8.0*pi*sqrt(sigk);
+    comp denom = eta_i*(-1.0/a + r*q*q/2.0 - ii*q); 
 
     return num/denom; 
 
 }
 
 //This M2k is sigk based, used mostly for plotting
-comp M2k_ERE_s2k(   comp E, 
+comp M2k_ERE_s2k(   double eta_i, 
+                    comp E, 
                     comp sigk, //energy squared of the two-body system
                     comp total_P,  
                     double a, //This is the scattering length
@@ -300,8 +358,8 @@ comp M2k_ERE_s2k(   comp E,
     //comp sigk = sigma(E, k, mi, total_P);
     comp q = q2k(sigk + ii*eps, mj, mk); 
 
-    comp num = 16.0*pi*sqrt(sigk);
-    comp denom = -1.0/a + r*q*q/2.0 - ii*q; 
+    comp num = 8.0*pi*std::sqrt(sigk + ii*eps);
+    comp denom = eta_i*(-1.0/a + r*q*q/2.0 - ii*q); 
 
     return num/denom; 
 

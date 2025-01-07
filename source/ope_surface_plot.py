@@ -71,7 +71,7 @@ def surface_plot_1(opefile, N):
             ax[i,j].tick_params(axis='both', which='minor', labelsize=20)
             ax[i,j].set_xlabel("Re $p$",fontsize=20)
             ax[i,j].set_ylabel("Im $p$",fontsize=20)
-            ax[i,j].contour(Xi, Yi, Z, levels=np.linspace(-100, 100, num=500), linewidths=0.5, colors='black', linestyles='solid')
+            ax[i,j].contour(Xi, Yi, Z, levels=np.linspace(-200, 200, num=1000), linewidths=0.5, colors='black', linestyles='solid')
             h0 = ax[i,j].contourf(Xi, Yi, Z, levels=np.linspace(-30, 30, num=30))
             divider = make_axes_locatable(ax[i,j])
             cax = divider.append_axes("right", "5%", pad="3%")

@@ -29,4 +29,14 @@ void LinearSolver_2(	Eigen::MatrixXcd &A,
 	relerr = (A*X - B).norm()/B.norm();
 }
 
+void LinearSolver_3(	Eigen::MatrixXcd &A, 
+						Eigen::VectorXcd &X,
+						Eigen::VectorXcd &B,
+						double &relerr			)
+{
+	X = A.partialPivLu().solve(B);
+
+	relerr = (A*X - B).norm()/B.norm();
+}
+
 #endif
